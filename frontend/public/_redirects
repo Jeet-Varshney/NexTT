@@ -1,0 +1,5 @@
+/*
+  Vercel SPA routing fix.
+  Ensures that React Router routes like /dashboard don't return 404 on direct access or refresh.
+*/
+/* /index.html 200
