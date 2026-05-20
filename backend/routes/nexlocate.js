@@ -27,16 +27,28 @@ let MOCK_CLAIMS = [];
 // ── GET /api/nexlocate/items  – all items (with optional filters)
 router.get('/items', async (req, res) => {
   const { type, location, search } = req.query;
+
+  const filterMock = () => {
+    let filtered = MOCK_ITEMS;
+    if (type && type !== 'all')
+      filtered = filtered.filter(i => i.type === type);
+    if (location)
+      filtered = filtered.filter(i => i.location.toLowerCase().includes(location.toLowerCase()));
+    if (search)
+      filtered = filtered.filter(i => i.title.toLowerCase().includes(search.toLowerCase()));
+    return filtered;
+  };
+
   try {
     let query = {};
     if (type && type !== 'all') query.type = type;
     if (location) query.location = { $regex: location, $options: 'i' };
     if (search)   query.title    = { $regex: search,   $options: 'i' };
-    let items = await LostItem.find(query).sort({ createdAt: -1 });
-    if (items.length === 0) items = MOCK_ITEMS;
+    const items = await LostItem.find(query).sort({ createdAt: -1 });
+    if (items.length === 0) return res.json(filterMock());
     res.json(items);
   } catch {
-    res.json(MOCK_ITEMS);
+    res.json(filterMock());
   }
 });
 

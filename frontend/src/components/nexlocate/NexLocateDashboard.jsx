@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Search, PlusCircle, LayoutList, Bell, User } from 'lucide-react';
+import { ArrowLeft, Search, PlusCircle, LayoutList, Bell } from 'lucide-react';
 import ItemFeed    from './ItemFeed';
 import ReportForm  from './ReportForm';
 import ClaimForm   from './ClaimForm';
@@ -59,15 +59,27 @@ const NexLocateDashboard = ({ onBack }) => {
   const [items, setItems]                 = useState([]);
   const [loading, setLoading]             = useState(true);
   const [submitLoading, setSubmitLoading] = useState(false);
-  const [claimTarget, setClaimTarget]     = useState(null);  // item being claimed
+  const [claimTarget, setClaimTarget]     = useState(null);
   const [claimLoading, setClaimLoading]   = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [toast, setToast]                 = useState(null);
 
   // Filters (lifted here so ItemFeed is controlled)
-  const [search, setSearch]               = useState('');
-  const [typeFilter, setTypeFilter]       = useState('all');
+  const [search, setSearch]                 = useState('');
+  const [typeFilter, setTypeFilter]         = useState('all');
   const [locationFilter, setLocationFilter] = useState('');
+
+  // ── helper to apply filters to mock data ──
+  const applyFiltersToMock = useCallback(() => {
+    let filtered = MOCK_ITEMS;
+    if (typeFilter && typeFilter !== 'all')
+      filtered = filtered.filter(i => i.type === typeFilter);
+    if (locationFilter)
+      filtered = filtered.filter(i => i.location.toLowerCase().includes(locationFilter.toLowerCase()));
+    if (search)
+      filtered = filtered.filter(i => i.title.toLowerCase().includes(search.toLowerCase()));
+    return filtered;
+  }, [typeFilter, locationFilter, search]);
 
   // ── fetch feed ──
   const fetchItems = useCallback(async () => {
@@ -79,13 +91,15 @@ const NexLocateDashboard = ({ onBack }) => {
       if (search)         params.set('search', search);
       const res  = await fetch(`${API}/items?${params}`);
       const data = await res.json();
-      setItems(data.length ? data : MOCK_ITEMS);
+      // Use real data if backend is up, otherwise filtered mock
+      setItems(data.length ? data : applyFiltersToMock());
     } catch {
-      setItems(MOCK_ITEMS);
+      // Backend down — apply filters to mock data locally
+      setItems(applyFiltersToMock());
     } finally {
       setLoading(false);
     }
-  }, [typeFilter, locationFilter, search]);
+  }, [typeFilter, locationFilter, search, applyFiltersToMock]);
 
   useEffect(() => {
     const t = setTimeout(fetchItems, 300); // debounce search
@@ -117,7 +131,6 @@ const NexLocateDashboard = ({ onBack }) => {
       setTab('feed');
       fetchItems();
     } catch (err) {
-      // If backend down, add to mock and still feel responsive
       const mockItem = {
         _id: `m-${Date.now()}`, ...formData,
         userId: CURRENT_USER, userDisplay: USER_DISPLAY,
@@ -153,7 +166,6 @@ const NexLocateDashboard = ({ onBack }) => {
       } else if (!res.ok) {
         throw new Error(data.message);
       } else {
-        // Add in-app notification for owner (simulated)
         setNotifications(prev => [
           {
             id: Date.now(),
@@ -251,8 +263,8 @@ const NexLocateDashboard = ({ onBack }) => {
               loading={loading}
               onClaim={setClaimTarget}
               currentUserId={CURRENT_USER}
-              search={search}        setSearch={setSearch}
-              typeFilter={typeFilter} setTypeFilter={setTypeFilter}
+              search={search}               setSearch={setSearch}
+              typeFilter={typeFilter}       setTypeFilter={setTypeFilter}
               locationFilter={locationFilter} setLocationFilter={setLocationFilter}
             />
           </motion.div>

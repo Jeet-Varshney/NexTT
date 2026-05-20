@@ -1,11 +1,19 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Filter } from 'lucide-react';
+import { Search } from 'lucide-react';
 import ItemCard from './ItemCard';
 
 const LOCATIONS = ['All Locations', 'Library', 'Cafeteria', 'Computer Lab', 'Main Gate',
   'Hostel Block A', 'Hostel Block B', 'Sports Ground', 'Auditorium', 'Admin Block', 'Parking Lot', 'Other'];
 
 const ItemFeed = ({ items, loading, onClaim, currentUserId, search, setSearch, typeFilter, setTypeFilter, locationFilter, setLocationFilter }) => {
+  const hasActiveFilters = search || typeFilter !== 'all' || locationFilter;
+
+  const handleClearFilters = () => {
+    setSearch('');
+    setTypeFilter('all');
+    setLocationFilter('');
+  };
+
   return (
     <div className="nl-feed-panel">
       {/* Search & Filters */}
@@ -37,12 +45,20 @@ const ItemFeed = ({ items, loading, onClaim, currentUserId, search, setSearch, t
             <option key={l} value={l === 'All Locations' ? '' : l}>{l}</option>
           ))}
         </select>
+
+        {/* Clear filters button — only shows when a filter is active */}
+        {hasActiveFilters && (
+          <button className="nl-clear-btn" onClick={handleClearFilters}>
+            ✕ Clear filters
+          </button>
+        )}
       </div>
 
       {/* Results count */}
       {!loading && (
         <p style={{ padding: '0 28px 4px', fontSize: '13px', color: 'var(--text-dim)' }}>
           {items.length} item{items.length !== 1 ? 's' : ''} found
+          {hasActiveFilters && ' for current filters'}
         </p>
       )}
 
@@ -68,8 +84,25 @@ const ItemFeed = ({ items, loading, onClaim, currentUserId, search, setSearch, t
       {!loading && items.length === 0 && (
         <div className="nl-empty">
           <div className="nl-empty-icon">🔎</div>
-          <h3>Nothing found</h3>
-          <p>Try adjusting your search or filters, or be the first to report!</p>
+          {hasActiveFilters ? (
+            <>
+              <h3>No results match your filters</h3>
+              <p>
+                No items found
+                {search && <span> for <strong>"{search}"</strong></span>}
+                {typeFilter !== 'all' && <span> in <strong>{typeFilter}</strong></span>}
+                {locationFilter && <span> at <strong>{locationFilter}</strong></span>}.
+              </p>
+              <button className="nl-clear-btn" onClick={handleClearFilters} style={{ marginTop: '12px' }}>
+                ✕ Clear filters
+              </button>
+            </>
+          ) : (
+            <>
+              <h3>No items reported yet</h3>
+              <p>Be the first to report a lost or found item!</p>
+            </>
+          )}
         </div>
       )}
 

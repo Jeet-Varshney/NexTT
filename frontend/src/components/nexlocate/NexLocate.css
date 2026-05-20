@@ -953,3 +953,20 @@
     padding: 22px 18px;
   }
 }
+
+.nl-clear-btn {
+  background: rgba(255, 80, 80, 0.1);
+  border: 1px solid rgba(255, 80, 80, 0.3);
+  color: #ff6b6b;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.nl-clear-btn:hover {
+  background: rgba(255, 80, 80, 0.2);
+}
